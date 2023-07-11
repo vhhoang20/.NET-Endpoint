@@ -8,91 +8,87 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class CartController : ControllerBase
     {
-        public static List<Order> orders = new List<Order>();
+        public static List<Cart> carts = new List<Cart>();
         public static List<OrderItem> orderItems = new List<OrderItem>();
 
-        [HttpGet]
-        public IActionResult GetAllOrders()
-        {
-            return Ok(orders);
-        }
-
         [HttpGet("{id}")]
-        public IActionResult GetOrderById(int id)
+        public IActionResult GetCartById(int id)
         {
-            var order = orders.Find(o => o.ID == id);
-            if (order == null)
+            var cart = carts.Find(c => c.ID == id);
+            if (cart == null)
             {
                 return NotFound();
             }
 
-            return Ok(order);
+            return Ok(cart);
         }
 
-        [HttpPost]
-        public IActionResult CreateOrder(Order newOrder)
+        [HttpPost("{id}/addProduct")]
+        public IActionResult AddProductToCart(int id, [FromBody] OrderItem orderItem)
         {
-            orders.Add(newOrder);
-            return CreatedAtAction(nameof(GetOrderById), new { id = newOrder.ID }, newOrder);
-        }
-
-        [HttpPut("{id}")]
-        public IActionResult UpdateOrder(int id, Order updatedOrder)
-        {
-            var order = orders.Find(o => o.ID == id);
-            if (order == null)
+            var cart = carts.Find(c => c.ID == id);
+            if (cart == null)
             {
                 return NotFound();
             }
 
-            order.status = updatedOrder.status;
-            // Update other properties as needed
-
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public IActionResult DeleteOrder(int id)
-        {
-            var order = orders.Find(o => o.ID == id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            orders.Remove(order);
-
-            return NoContent();
-        }
-
-        [HttpGet("{id}/orderItems")]
-        public IActionResult GetOrderItems(int id)
-        {
-            var items = orderItems.Where(oi => oi.orderID == id).ToList();
-            if (items.Count == 0)
-            {
-                return NotFound("No order items found for the specified order.");
-            }
-
-            return Ok(items);
-        }
-
-        [HttpPost("{id}/orderItems")]
-        public IActionResult AddOrderItems(int id, [FromBody] List<OrderItem> items)
-        {
-            var order = orders.Find(o => o.ID == id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            foreach (var item in items)
-            {
-                item.orderID = id;
-                orderItems.Add(item);
-            }
+            orderItem.cartID = id;
+            orderItem.status = "InCart";
+            orderItems.Add(orderItem);
 
             return Ok();
+        }
+
+        [HttpGet("{id}/getProducts")]
+        public IActionResult GetCartProducts(int id)
+        {
+            var productsInCart = orderItems
+                .Where(oi => oi.cartID == id && oi.status == "InCart")
+                .Select(oi => new
+                {
+                    oi.productID,
+                    oi.quantity
+                })
+                .ToList();
+
+            return Ok(productsInCart);
+        }
+
+        [HttpDelete("{id}/removeProduct/{productID}")]
+        public IActionResult RemoveProductFromCart(int id, int productID)
+        {
+            var orderItem = orderItems.Find(oi => oi.cartID == id && oi.productID == productID && oi.status == "InCart");
+            if (orderItem == null)
+            {
+                return NotFound();
+            }
+
+            orderItems.Remove(orderItem);
+
+            return NoContent();
+        }
+
+        [HttpPost("{id}/placeOrder")]
+        public IActionResult PlaceOrder(int id)
+        {
+            var cart = carts.Find(c => c.ID == id);
+            if (cart == null)
+            {
+                return NotFound();
+            }
+
+            var cartItems = orderItems.Where(oi => oi.cartID == id && oi.status == "InCart").ToList();
+            if (cartItems.Count == 0)
+            {
+                return BadRequest("No products in the cart.");
+            }
+
+            foreach (var item in cartItems)
+            {
+                item.status = "Ordered";
+            }
+
+            return Ok("Order placed successfully.");
         }
     }
 }
