@@ -8,83 +8,91 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class CartController : ControllerBase
     {
-        public static List<Cart> carts = new List<Cart>();
+        public static List<Order> orders = new List<Order>();
         public static List<OrderItem> orderItems = new List<OrderItem>();
 
-        [HttpGet("{id}")]
-        public IActionResult GetCartById(int id)
+        [HttpGet]
+        public IActionResult GetAllOrders()
         {
-            var cart = carts.Find(c => c.ID == id);
-            if (cart == null)
+            return Ok(orders);
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetOrderById(int id)
+        {
+            var order = orders.Find(o => o.ID == id);
+            if (order == null)
             {
                 return NotFound();
             }
 
-            return Ok(cart);
+            return Ok(order);
         }
 
         [HttpPost]
-        public IActionResult CreateCart(Cart cart)
+        public IActionResult CreateOrder(Order newOrder)
         {
-            carts.Add(cart);
-            return CreatedAtAction(nameof(GetCartById), new { id = cart.ID }, cart);
+            orders.Add(newOrder);
+            return CreatedAtAction(nameof(GetOrderById), new { id = newOrder.ID }, newOrder);
         }
 
-        [HttpGet("{cartId}/orderitems")]
-        public IActionResult GetOrderItems(int cartId)
+        [HttpPut("{id}")]
+        public IActionResult UpdateOrder(int id, Order updatedOrder)
         {
-            var items = orderItems.FindAll(oi => oi.cartID == cartId);
+            var order = orders.Find(o => o.ID == id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            order.status = updatedOrder.status;
+            // Update other properties as needed
+
+            return NoContent();
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteOrder(int id)
+        {
+            var order = orders.Find(o => o.ID == id);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            orders.Remove(order);
+
+            return NoContent();
+        }
+
+        [HttpGet("{id}/orderItems")]
+        public IActionResult GetOrderItems(int id)
+        {
+            var items = orderItems.Where(oi => oi.orderID == id).ToList();
+            if (items.Count == 0)
+            {
+                return NotFound("No order items found for the specified order.");
+            }
+
             return Ok(items);
         }
 
-        [HttpPost("{cartId}/orderitems")]
-        public IActionResult AddOrderItem(int cartId, OrderItem orderItem)
+        [HttpPost("{id}/orderItems")]
+        public IActionResult AddOrderItems(int id, [FromBody] List<OrderItem> items)
         {
-            orderItem.cartID = cartId;
-            orderItems.Add(orderItem);
-            return CreatedAtAction(nameof(GetOrderItemById), new { cartId = orderItem.cartID, id = orderItem.orderID }, orderItem);
-        }
-
-        [HttpGet("{cartId}/orderitems/{id}")]
-        public IActionResult GetOrderItemById(int cartId, int id)
-        {
-            var orderItem = orderItems.Find(oi => oi.cartID == cartId && oi.orderID == id);
-            if (orderItem == null)
+            var order = orders.Find(o => o.ID == id);
+            if (order == null)
             {
                 return NotFound();
             }
 
-            return Ok(orderItem);
-        }
-
-        [HttpPut("{cartId}/orderitems/{id}")]
-        public IActionResult UpdateOrderItem(int cartId, int id, OrderItem updatedOrderItem)
-        {
-            var orderItem = orderItems.Find(oi => oi.cartID == cartId && oi.orderID == id);
-            if (orderItem == null)
+            foreach (var item in items)
             {
-                return NotFound();
+                item.orderID = id;
+                orderItems.Add(item);
             }
 
-            orderItem.productID = updatedOrderItem.productID;
-            orderItem.quantity = updatedOrderItem.quantity;
-            orderItem.status = updatedOrderItem.status;
-
-            return NoContent();
-        }
-
-        [HttpDelete("{cartId}/orderitems/{id}")]
-        public IActionResult DeleteOrderItem(int cartId, int id)
-        {
-            var orderItem = orderItems.Find(oi => oi.cartID == cartId && oi.orderID == id);
-            if (orderItem == null)
-            {
-                return NotFound();
-            }
-
-            orderItems.Remove(orderItem);
-
-            return NoContent();
+            return Ok();
         }
     }
 }
