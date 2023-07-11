@@ -9,7 +9,7 @@ namespace WebApplication1.Controllers
     public class CartController : ControllerBase
     {
         public static List<Cart> carts = new List<Cart>();
-        public static List<CartProduct> cartProducts = new List<CartProduct>();
+        public static List<OrderItem> orderItems = new List<OrderItem>();
 
         [HttpGet("{id}")]
         public IActionResult GetCartById(int id)
@@ -30,58 +30,59 @@ namespace WebApplication1.Controllers
             return CreatedAtAction(nameof(GetCartById), new { id = cart.ID }, cart);
         }
 
-        [HttpGet("{cartId}/cartproducts")]
-        public IActionResult GetCartProducts(int cartId)
+        [HttpGet("{cartId}/orderitems")]
+        public IActionResult GetOrderItems(int cartId)
         {
-            var products = cartProducts.FindAll(cp => cp.cartID == cartId);
-            return Ok(products);
+            var items = orderItems.FindAll(oi => oi.cartID == cartId);
+            return Ok(items);
         }
 
-        [HttpPost("{cartId}/cartproducts")]
-        public IActionResult AddCartProduct(int cartId, CartProduct cartProduct)
+        [HttpPost("{cartId}/orderitems")]
+        public IActionResult AddOrderItem(int cartId, OrderItem orderItem)
         {
-            cartProduct.cartID = cartId;
-            cartProducts.Add(cartProduct);
-            return CreatedAtAction(nameof(GetCartProductById), new { cartId = cartProduct.cartID, id = cartProduct.cartID }, cartProduct);
+            orderItem.cartID = cartId;
+            orderItems.Add(orderItem);
+            return CreatedAtAction(nameof(GetOrderItemById), new { cartId = orderItem.cartID, id = orderItem.orderID }, orderItem);
         }
 
-        [HttpGet("{cartId}/cartproducts/{id}")]
-        public IActionResult GetCartProductById(int cartId, int id)
+        [HttpGet("{cartId}/orderitems/{id}")]
+        public IActionResult GetOrderItemById(int cartId, int id)
         {
-            var cartProduct = cartProducts.Find(cp => cp.cartID == cartId && cp.cartID == id);
-            if (cartProduct == null)
+            var orderItem = orderItems.Find(oi => oi.cartID == cartId && oi.orderID == id);
+            if (orderItem == null)
             {
                 return NotFound();
             }
 
-            return Ok(cartProduct);
+            return Ok(orderItem);
         }
 
-        [HttpPut("{cartId}/cartproducts/{id}")]
-        public IActionResult UpdateCartProduct(int cartId, int id, CartProduct updatedCartProduct)
+        [HttpPut("{cartId}/orderitems/{id}")]
+        public IActionResult UpdateOrderItem(int cartId, int id, OrderItem updatedOrderItem)
         {
-            var cartProduct = cartProducts.Find(cp => cp.cartID == cartId && cp.cartID == id);
-            if (cartProduct == null)
+            var orderItem = orderItems.Find(oi => oi.cartID == cartId && oi.orderID == id);
+            if (orderItem == null)
             {
                 return NotFound();
             }
 
-            cartProduct.cartID = updatedCartProduct.cartID;
-            cartProduct.quantity = updatedCartProduct.quantity;
+            orderItem.productID = updatedOrderItem.productID;
+            orderItem.quantity = updatedOrderItem.quantity;
+            orderItem.status = updatedOrderItem.status;
 
             return NoContent();
         }
 
-        [HttpDelete("{cartId}/cartproducts/{id}")]
-        public IActionResult DeleteCartProduct(int cartId, int id)
+        [HttpDelete("{cartId}/orderitems/{id}")]
+        public IActionResult DeleteOrderItem(int cartId, int id)
         {
-            var cartProduct = cartProducts.Find(cp => cp.cartID == cartId && cp.cartID == id);
-            if (cartProduct == null)
+            var orderItem = orderItems.Find(oi => oi.cartID == cartId && oi.orderID == id);
+            if (orderItem == null)
             {
                 return NotFound();
             }
 
-            cartProducts.Remove(cartProduct);
+            orderItems.Remove(orderItem);
 
             return NoContent();
         }

@@ -10,12 +10,6 @@ namespace WebApplication1.Controllers
     {
         public static List<User> users = new List<User>();
 
-        [HttpGet]
-        public IActionResult GetAllUsers()
-        {
-            return Ok(users);
-        }
-
         [HttpGet("{id}")]
         public IActionResult GetUserById(int id)
         {
@@ -28,38 +22,47 @@ namespace WebApplication1.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
-        public IActionResult CreateUser(User newUser)
+        [HttpPost("login")]
+        public IActionResult Login(string username, string password)
         {
-            newUser.ID = users.Count + 1;
-            users.Add(newUser);
+            var user = users.Find(u => u.username == username && u.password == password);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
 
-            return CreatedAtAction(nameof(GetUserById), new { id = newUser.ID }, newUser);
+            return Ok();
         }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, User updatedUser)
+        [HttpPost("forgetpassword")]
+        public IActionResult ForgetPassword(string mail)
         {
-            var user = users.Find(u => u.ID == id);
+            var user = users.Find(u => u.mail == mail);
             if (user == null)
             {
                 return NotFound();
             }
 
-            user.name = updatedUser.name;
-            user.mail = updatedUser.mail;
-            user.birth = updatedUser.birth;
-            user.sex = updatedUser.sex;
-            user.company = updatedUser.company;
-            user.home = updatedUser.home;
-            user.username = updatedUser.username;
-            user.password = updatedUser.password;
+            return Ok();
+        }
+
+        [HttpPut("updatepassword")]
+        public IActionResult UpdatePassword(string username, string oldPassword, string newPassword)
+        {
+            var user = users.Find(u => u.username == username && u.password == oldPassword);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            // Update the password for the user
+            user.password = newPassword;
 
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult DeleteUser(int id)
+        [HttpPut("updateprofile")]
+        public IActionResult UpdateProfile(int id, string name, string mail, DateOnly birth, bool sex, string company, string home)
         {
             var user = users.Find(u => u.ID == id);
             if (user == null)
@@ -67,7 +70,13 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            users.Remove(user);
+            // Update the profile information for the user
+            user.name = name;
+            user.mail = mail;
+            user.birth = birth;
+            user.sex = sex;
+            user.company = company;
+            user.home = home;
 
             return NoContent();
         }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using WebApplication1.Models;
+using System;
+using System.Text.RegularExpressions;
 
 namespace WebApplication1.Controllers
 {
@@ -28,17 +30,8 @@ namespace WebApplication1.Controllers
             return Ok(payment);
         }
 
-        [HttpPost]
-        public IActionResult CreatePayment(Payment newPayment)
-        {
-            newPayment.Id = payments.Count + 1;
-            payments.Add(newPayment);
-
-            return CreatedAtAction(nameof(GetPaymentById), new { id = newPayment.Id }, newPayment);
-        }
-
-        [HttpPut("{id}")]
-        public IActionResult UpdatePayment(int id, Payment updatedPayment)
+        [HttpGet("{id}/balance")]
+        public IActionResult GetPaymentBalance(int id)
         {
             var payment = payments.Find(p => p.Id == id);
             if (payment == null)
@@ -46,15 +39,12 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            payment.CardType = updatedPayment.CardType;
-            payment.CardNumber = updatedPayment.CardNumber;
-            payment.balance = updatedPayment.balance;
-
-            return NoContent();
+            int balance = payment.balance;
+            return Ok(balance);
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult DeletePayment(int id)
+        [HttpPut("{id}/recalculate")]
+        public IActionResult RecalculatePayment(int id, int deduction)
         {
             var payment = payments.Find(p => p.Id == id);
             if (payment == null)
@@ -62,8 +52,7 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            payments.Remove(payment);
-
+            payment.balance = payment.balance - deduction;
             return NoContent();
         }
     }

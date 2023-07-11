@@ -28,17 +28,8 @@ namespace WebApplication1.Controllers
             return Ok(product);
         }
 
-        [HttpPost]
-        public IActionResult CreateProduct(Product newProduct)
-        {
-            newProduct.ID = products.Count + 1;
-            products.Add(newProduct);
-
-            return CreatedAtAction(nameof(GetProductById), new { id = newProduct.ID }, newProduct);
-        }
-
         [HttpPut("{id}")]
-        public IActionResult UpdateProduct(int id, Product updatedProduct)
+        public IActionResult UpdateProduct(int id, string name, string description, int price, float rate)
         {
             var product = products.Find(p => p.ID == id);
             if (product == null)
@@ -46,10 +37,10 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            product.name = updatedProduct.name;
-            product.description = updatedProduct.description;
-            product.price = updatedProduct.price;
-            product.rate = updatedProduct.rate;
+            product.name = name;
+            product.description = description;
+            product.price = price;
+            product.rate = rate;
 
             return NoContent();
         }
@@ -67,5 +58,46 @@ namespace WebApplication1.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("{id}/addToCart")]
+        public IActionResult AddToCart(int id, int numberOfProduct)
+        {
+            var product = products.Find(p => p.ID == id);
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            
+            return Ok();
+        }
+
+        [HttpGet("query")]
+        public IActionResult QueryProducts(string name, string startPrice, string endPrice, float? startRate, float? endRate)
+        {
+            int? parsedStartPrice = null;
+            int? parsedEndPrice = null;
+
+            if (!string.IsNullOrEmpty(startPrice) && int.TryParse(startPrice, out int parsedStart))
+            {
+                parsedStartPrice = parsedStart;
+            }
+
+            if (!string.IsNullOrEmpty(endPrice) && int.TryParse(endPrice, out int parsedEnd))
+            {
+                parsedEndPrice = parsedEnd;
+            }
+
+            var queriedProducts = products.Where(p =>
+                (string.IsNullOrEmpty(name) || p.name.Contains(name)) &&
+                (!parsedStartPrice.HasValue || p.price >= parsedStartPrice.Value) &&
+                (!parsedEndPrice.HasValue || p.price <= parsedEndPrice.Value) &&
+                (!startRate.HasValue || p.rate >= startRate.Value) &&
+                (!endRate.HasValue || p.rate <= endRate.Value)
+            ).ToList();
+
+            return Ok(queriedProducts);
+        }
+
     }
 }
