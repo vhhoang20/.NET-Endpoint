@@ -1,5 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
@@ -8,96 +13,111 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        public static List<Product> products = new List<Product>();
+        private readonly APIDbContext _context;
 
+        public ProductController(APIDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Product
         [HttpGet]
-        public IActionResult GetAllProducts()
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            return Ok(products);
+          if (_context.Products == null)
+          {
+              return NotFound();
+          }
+            return await _context.Products.ToListAsync();
         }
 
+        // GET: api/Product/5
         [HttpGet("{id}")]
-        public IActionResult GetProductById(int id)
+        public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            var product = products.Find(p => p.ID == id);
+          if (_context.Products == null)
+          {
+              return NotFound();
+          }
+            var product = await _context.Products.FindAsync(id);
+
             if (product == null)
             {
                 return NotFound();
             }
 
-            return Ok(product);
+            return product;
         }
 
+        // PUT: api/Product/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public IActionResult UpdateProduct(int id, string name, string description, int price, float rate)
+        public async Task<IActionResult> PutProduct(int id, Product product)
         {
-            var product = products.Find(p => p.ID == id);
-            if (product == null)
+            if (id != product.ID)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            product.name = name;
-            product.description = description;
-            product.price = price;
-            product.rate = rate;
+            _context.Entry(product).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ProductExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
 
             return NoContent();
         }
 
+        // POST: api/Product
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Product>> PostProduct(Product product)
+        {
+          if (_context.Products == null)
+          {
+              return Problem("Entity set 'APIDbContext.Products'  is null.");
+          }
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetProduct", new { id = product.ID }, product);
+        }
+
+        // DELETE: api/Product/5
         [HttpDelete("{id}")]
-        public IActionResult DeleteProduct(int id)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = products.Find(p => p.ID == id);
+            if (_context.Products == null)
+            {
+                return NotFound();
+            }
+            var product = await _context.Products.FindAsync(id);
             if (product == null)
             {
                 return NotFound();
             }
 
-            products.Remove(product);
+            _context.Products.Remove(product);
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        [HttpPost("{id}/addToCart")]
-        public IActionResult AddToCart(int id, int numberOfProduct)
+        private bool ProductExists(int id)
         {
-            var product = products.Find(p => p.ID == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
-
-            
-            return Ok();
+            return (_context.Products?.Any(e => e.ID == id)).GetValueOrDefault();
         }
-
-        [HttpGet("query")]
-        public IActionResult QueryProducts(string name, string startPrice, string endPrice, float? startRate, float? endRate)
-        {
-            int? parsedStartPrice = null;
-            int? parsedEndPrice = null;
-
-            if (!string.IsNullOrEmpty(startPrice) && int.TryParse(startPrice, out int parsedStart))
-            {
-                parsedStartPrice = parsedStart;
-            }
-
-            if (!string.IsNullOrEmpty(endPrice) && int.TryParse(endPrice, out int parsedEnd))
-            {
-                parsedEndPrice = parsedEnd;
-            }
-
-            var queriedProducts = products.Where(p =>
-                (string.IsNullOrEmpty(name) || p.name.Contains(name)) &&
-                (!parsedStartPrice.HasValue || p.price >= parsedStartPrice.Value) &&
-                (!parsedEndPrice.HasValue || p.price <= parsedEndPrice.Value) &&
-                (!startRate.HasValue || p.rate >= startRate.Value) &&
-                (!endRate.HasValue || p.rate <= endRate.Value)
-            ).ToList();
-
-            return Ok(queriedProducts);
-        }
-
     }
 }
