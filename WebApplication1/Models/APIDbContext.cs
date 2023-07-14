@@ -18,6 +18,5 @@ namespace WebApplication1.Models
             modelBuilder.Entity<OrderItem>()
                 .HasKey(o => new { o.orderID, o.cartID});
         }
-
     }
 }
