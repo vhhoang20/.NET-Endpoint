@@ -18,5 +18,12 @@ namespace WebApplication1.Models
             modelBuilder.Entity<OrderItem>()
                 .HasKey(o => new { o.orderID, o.cartID});
         }
+
+        public const string ConnectStrring = @"Data Sourc=localhost;Initial Catalog=Temp;Integrated Security=True;Trusted_Connection=true;TrustServerCertificate=True;";
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer(ConnectStrring);
+        }
     }
 }
