@@ -7,6 +7,7 @@ namespace WebApplication1.Models
     {
         [Key]
         public int ID { get; set; }
+        [ForeignKey("User")]
         public int customerID { get; set; }
         public DateTime date { get; set; }
         public string address { get; set; }

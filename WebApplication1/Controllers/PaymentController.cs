@@ -35,10 +35,6 @@ namespace WebApplication1.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Payment>> GetPayment(int id)
         {
-          if (_context.Payments == null)
-          {
-              return NotFound();
-          }
             var payment = await _context.Payments.FindAsync(id);
 
             if (payment == null)
@@ -46,30 +42,36 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            return payment;
+            return Ok(payment);
         }
 
         // PUT: api/Payment/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPayment(int id, Payment payment)
+        [HttpPut]
+        public async Task<IActionResult> PutPayment(Payment payment)
         {
-            if (id != payment.Id)
+            // Find the existing by ID
+            var existingPayment = await _context.Payments.FirstOrDefaultAsync(u => u.Id == payment.Id);
+            if (existingPayment == null)
             {
-                return BadRequest();
+                return NotFound("User not found.");
             }
 
-            _context.Entry(payment).State = EntityState.Modified;
+            // Update the properties of the existing user
+            existingPayment.CardNumber = payment.CardNumber;
+            existingPayment.CardType = payment.CardType;
+            existingPayment.balance = payment.balance;
 
             try
             {
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!PaymentExists(id))
+                if (!PaymentExists(payment.Id))
                 {
-                    return NotFound();
+                    return NotFound("Payment not found.");
                 }
                 else
                 {
@@ -77,7 +79,8 @@ namespace WebApplication1.Controllers
                 }
             }
 
-            return NoContent();
+            // Return the updated user
+            return Ok("Modified success");
         }
 
         // POST: api/Payment
@@ -85,25 +88,24 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<ActionResult<Payment>> PostPayment(Payment payment)
         {
-          if (_context.Payments == null)
-          {
-              return Problem("Entity set 'APIDbContext.Payments'  is null.");
-          }
+            var existingPayment = await _context.Payments.FirstOrDefaultAsync(u => u.Id == payment.Id);
+            if (existingPayment != null)
+            {
+                return Conflict("Payment is already exist.");
+            }
+
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPayment", new { id = payment.Id }, payment);
+            // Registration successful
+            return Ok(payment);
         }
 
         // DELETE: api/Payment/5
-        [HttpDelete("{id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeletePayment(int id)
         {
-            if (_context.Payments == null)
-            {
-                return NotFound();
-            }
-            var payment = await _context.Payments.FindAsync(id);
+            var payment = await _context.Payments.FirstOrDefaultAsync(u => u.Id == id);
             if (payment == null)
             {
                 return NotFound();
@@ -112,7 +114,7 @@ namespace WebApplication1.Controllers
             _context.Payments.Remove(payment);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Payment deleted successfully.");
         }
 
         private bool PaymentExists(int id)

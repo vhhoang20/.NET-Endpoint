@@ -35,10 +35,6 @@ namespace WebApplication1.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Order>> GetOrder(int id)
         {
-          if (_context.Orders == null)
-          {
-              return NotFound();
-          }
             var order = await _context.Orders.FindAsync(id);
 
             if (order == null)
@@ -46,30 +42,36 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            return order;
+            return Ok(order);
         }
 
         // PUT: api/Order/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
+        [HttpPut]
+        public async Task<IActionResult> PutOrder(Order order)
         {
-            if (id != order.ID)
+            var existingOder = await _context.Orders.FirstOrDefaultAsync(u => u.ID == order.ID);
+            if (existingOder == null)
             {
-                return BadRequest();
+                return NotFound("Order not found.");
             }
 
-            _context.Entry(order).State = EntityState.Modified;
+            // Update the properties of the existing user
+            existingOder.date = order.date;
+            existingOder.address = order.address;
+            existingOder.price = order.price;
+            existingOder.status = order.status;
 
             try
             {
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!OrderExists(id))
+                if (!OrderExists(existingOder.ID))
                 {
-                    return NotFound();
+                    return NotFound("Order not found.");
                 }
                 else
                 {
@@ -77,7 +79,8 @@ namespace WebApplication1.Controllers
                 }
             }
 
-            return NoContent();
+            // Return the updated user
+            return Ok("Modified success");
         }
 
         // POST: api/Order
@@ -85,25 +88,24 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<ActionResult<Order>> PostOrder(Order order)
         {
-          if (_context.Orders == null)
-          {
-              return Problem("Entity set 'APIDbContext.Orders'  is null.");
-          }
+            var existingOrder = await _context.Orders.FirstOrDefaultAsync(u => u.ID == order.ID);
+            if (existingOrder != null)
+            {
+                return Conflict("Username or email is already exist.");
+            }
+
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetOrder", new { id = order.ID }, order);
+            // Registration successful
+            return Ok(order);
         }
 
         // DELETE: api/Order/5
-        [HttpDelete("{id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            if (_context.Orders == null)
-            {
-                return NotFound();
-            }
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.FirstOrDefaultAsync(u => u.ID == id);
             if (order == null)
             {
                 return NotFound();
@@ -112,7 +114,7 @@ namespace WebApplication1.Controllers
             _context.Orders.Remove(order);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Orders deleted successfully.");
         }
 
         private bool OrderExists(int id)

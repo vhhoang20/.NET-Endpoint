@@ -35,10 +35,6 @@ namespace WebApplication1.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<OrderItem>> GetOrderItem(int id)
         {
-          if (_context.OrderItems == null)
-          {
-              return NotFound();
-          }
             var orderItem = await _context.OrderItems.FindAsync(id);
 
             if (orderItem == null)
@@ -46,30 +42,35 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            return orderItem;
+            return Ok(orderItem);
         }
 
         // PUT: api/OrderItem/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrderItem(int id, OrderItem orderItem)
+        [HttpPut]
+        public async Task<IActionResult> PutOrderItem(OrderItem orderItem)
         {
-            if (id != orderItem.orderID)
+            var existingOrderItem = await _context.OrderItems.FirstOrDefaultAsync(u => u.cartID == orderItem.cartID || u.orderID == orderItem.orderID);
+            if (existingOrderItem == null)
             {
-                return BadRequest();
+                return NotFound("Order item not found.");
             }
 
-            _context.Entry(orderItem).State = EntityState.Modified;
+            // Update the properties of the existing
+            existingOrderItem.productID = orderItem.productID;
+            existingOrderItem.quantity = orderItem.quantity;
+            existingOrderItem.status = orderItem.status;
 
             try
             {
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!OrderItemExists(id))
+                if (!OrderItemExists(orderItem.orderID, orderItem.cartID))
                 {
-                    return NotFound();
+                    return NotFound("Order item not found.");
                 }
                 else
                 {
@@ -77,7 +78,8 @@ namespace WebApplication1.Controllers
                 }
             }
 
-            return NoContent();
+            // Return the updated user
+            return Ok("Modified success");
         }
 
         // POST: api/OrderItem
@@ -85,39 +87,24 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<ActionResult<OrderItem>> PostOrderItem(OrderItem orderItem)
         {
-          if (_context.OrderItems == null)
-          {
-              return Problem("Entity set 'APIDbContext.OrderItems'  is null.");
-          }
-            _context.OrderItems.Add(orderItem);
-            try
+            var existingOrderItem = await _context.OrderItems.FirstOrDefaultAsync(u => u.orderID == orderItem.orderID || u.cartID == orderItem.cartID);
+            if (existingOrderItem != null)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (OrderItemExists(orderItem.orderID))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
+                return Conflict("Order item is already exist.");
             }
 
-            return CreatedAtAction("GetOrderItem", new { id = orderItem.orderID }, orderItem);
+            _context.OrderItems.Add(orderItem);
+            await _context.SaveChangesAsync();
+
+            // Registration successful
+            return Ok(orderItem);
         }
 
         // DELETE: api/OrderItem/5
-        [HttpDelete("{id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteOrderItem(int id)
         {
-            if (_context.OrderItems == null)
-            {
-                return NotFound();
-            }
-            var orderItem = await _context.OrderItems.FindAsync(id);
+            var orderItem = await _context.OrderItems.FirstOrDefaultAsync(u => u.productID == id);
             if (orderItem == null)
             {
                 return NotFound();
@@ -126,12 +113,12 @@ namespace WebApplication1.Controllers
             _context.OrderItems.Remove(orderItem);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Deleted successfully.");
         }
 
-        private bool OrderItemExists(int id)
+        private bool OrderItemExists(int orderId, int cartId)
         {
-            return (_context.OrderItems?.Any(e => e.orderID == id)).GetValueOrDefault();
+            return (_context.OrderItems?.Any(e => e.orderID == orderId && e.cartID == cartId)).GetValueOrDefault();
         }
     }
 }

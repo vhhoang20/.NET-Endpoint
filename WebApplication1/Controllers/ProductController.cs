@@ -35,10 +35,6 @@ namespace WebApplication1.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-          if (_context.Products == null)
-          {
-              return NotFound();
-          }
             var product = await _context.Products.FindAsync(id);
 
             if (product == null)
@@ -46,30 +42,37 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            return product;
+            return Ok(product);
         }
 
         // PUT: api/Product/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutProduct(int id, Product product)
+        [HttpPut]
+        public async Task<IActionResult> PutProduct(Product product)
         {
-            if (id != product.ID)
+            // Find the existing user by ID
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(u => u.ID == product.ID);
+            if (existingProduct == null)
             {
-                return BadRequest();
+                return NotFound("Product not found.");
             }
 
-            _context.Entry(product).State = EntityState.Modified;
+            // Update the properties of the existing user
+            existingProduct.name = product.name;
+            existingProduct.description = product.description;
+            existingProduct.price = product.price;
+            existingProduct.rate = product.rate;
 
             try
             {
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ProductExists(id))
+                if (!ProductExists(product.ID))
                 {
-                    return NotFound();
+                    return NotFound("Product not found.");
                 }
                 else
                 {
@@ -77,7 +80,8 @@ namespace WebApplication1.Controllers
                 }
             }
 
-            return NoContent();
+            // Return the updated user
+            return Ok("Modified success");
         }
 
         // POST: api/Product
@@ -85,25 +89,18 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-          if (_context.Products == null)
-          {
-              return Problem("Entity set 'APIDbContext.Products'  is null.");
-          }
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetProduct", new { id = product.ID }, product);
+            // Registration successful
+            return Ok(product);
         }
 
         // DELETE: api/Product/5
-        [HttpDelete("{id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            if (_context.Products == null)
-            {
-                return NotFound();
-            }
-            var product = await _context.Products.FindAsync(id);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.ID == id);
             if (product == null)
             {
                 return NotFound();
@@ -112,7 +109,7 @@ namespace WebApplication1.Controllers
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("Product deleted successfully.");
         }
 
         private bool ProductExists(int id)

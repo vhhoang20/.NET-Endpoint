@@ -32,14 +32,10 @@ namespace WebApplication1.Controllers
             return await _context.Users.ToListAsync();
         }
 
-        // GET: api/User/5
+        // GET: api/User
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-          if (_context.Users == null)
-          {
-              return NotFound();
-          }
             var user = await _context.Users.FindAsync(id);
 
             if (user == null)
@@ -47,30 +43,41 @@ namespace WebApplication1.Controllers
                 return NotFound();
             }
 
-            return user;
+            return Ok(user);
         }
 
-        // PUT: api/User/5
+        // PUT: api/User
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        [HttpPut]
+        public async Task<IActionResult> PutUser(User user)
         {
-            if (id != user.ID)
+            // Find the existing user by ID
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.ID == user.ID);
+            if (existingUser == null)
             {
-                return BadRequest();
+                return NotFound("User not found.");
             }
 
-            _context.Entry(user).State = EntityState.Modified;
+            // Update the properties of the existing user
+            existingUser.name = user.name;
+            existingUser.mail = user.mail;
+            existingUser.birth = user.birth;
+            existingUser.sex = user.sex;
+            existingUser.company = user.company;
+            existingUser.home = user.home;
+            existingUser.username = user.username;
+            existingUser.password = user.password;
 
             try
             {
+                // Save the changes to the database
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id))
+                if (!UserExists(user.ID))
                 {
-                    return NotFound();
+                    return NotFound("User not found.");
                 }
                 else
                 {
@@ -78,33 +85,34 @@ namespace WebApplication1.Controllers
                 }
             }
 
-            return NoContent();
+            // Return the updated user
+            return Ok("Modified success");
         }
 
+
+
         // POST: api/User
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-          if (_context.Users == null)
-          {
-              return Problem("Entity set 'APIDbContext.Users'  is null.");
-          }
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.username == user.username || u.mail == user.mail);
+            if (existingUser != null)
+            {
+                return Conflict("Username or email is already exist.");
+            }
+
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetUser", new { id = user.ID }, user);
+            // Registration successful
+            return Ok(user);
         }
 
-        // DELETE: api/User/5
-        [HttpDelete("{id}")]
+        // DELETE: api/User
+        [HttpDelete]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            if (_context.Users == null)
-            {
-                return NotFound();
-            }
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.ID == id);
             if (user == null)
             {
                 return NotFound();
@@ -113,8 +121,9 @@ namespace WebApplication1.Controllers
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok("User deleted successfully.");
         }
+
 
         private bool UserExists(int id)
         {

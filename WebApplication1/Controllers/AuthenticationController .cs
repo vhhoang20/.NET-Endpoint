@@ -9,7 +9,7 @@ using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
@@ -36,34 +36,26 @@ namespace WebApplication1.Controllers
 
         // POST: /authentication/register
         [HttpPost("Register")]
-        public async Task<IActionResult> Register(Register account)
+        public async Task<ActionResult> Register(Register account)
         {
-            if (ModelState.IsValid)
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.username == account.UserName || u.mail == account.mail);
+            if (existingUser != null)
             {
-                // Check if the username is already taken
-                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.username == account.UserName || u.mail == account.mail);
-                if (existingUser != null)
-                {
-                    ModelState.AddModelError("AccountExisted", "Username or email is already taken.");
-                    return BadRequest(ModelState);
-                }
-
-                // Save the new user to the database
-                var newUser = new User
-                {
-                    username = account.UserName,
-                    password = account.Password,
-                    mail = account.mail
-                };
-                _context.Users.Add(newUser);
-                await _context.SaveChangesAsync();
-
-                // Registration successful
-                return Ok("Registration successful.");
+                return BadRequest("Username or email is already taken.");
             }
 
-            // Invalid model state
-            return BadRequest(ModelState);
+            // Save the new user to the database
+            var newUser = new User
+            {
+                username = account.UserName,
+                password = account.Password,
+                mail = account.mail
+            };
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+
+            // Registration successful
+            return Ok("Registration successful.");
         }
     }
 }
