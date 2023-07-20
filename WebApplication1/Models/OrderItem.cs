@@ -5,9 +5,9 @@ namespace WebApplication1.Models
 {
     public class OrderItem
     {
-        [Key]
+        [ForeignKey("Order")]
         public int orderID { get; set; }
-        [Key]
+        [ForeignKey("Cart")]
         public int cartID { get; set; }
         [ForeignKey("Product")]
         public int productID { get; set; }

@@ -35,7 +35,7 @@ namespace WebApplication1.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<OrderItem>> GetOrderItem(int id)
         {
-            var orderItem = await _context.OrderItems.FindAsync(id);
+            var orderItem = await _context.OrderItems.FirstOrDefaultAsync(u => u.productID == id);
 
             if (orderItem == null)
             {
@@ -102,9 +102,9 @@ namespace WebApplication1.Controllers
 
         // DELETE: api/OrderItem/5
         [HttpDelete]
-        public async Task<IActionResult> DeleteOrderItem(int id)
+        public async Task<IActionResult> DeleteOrderItem(int? orderId, int? cartId)
         {
-            var orderItem = await _context.OrderItems.FirstOrDefaultAsync(u => u.productID == id);
+            var orderItem = await _context.OrderItems.FirstOrDefaultAsync(u => u.orderID == orderId || u.cartID == cartId);
             if (orderItem == null)
             {
                 return NotFound();
