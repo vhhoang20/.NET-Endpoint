@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApplication1.Models
 {
-    public class User
+    public class User : IdentityUser
     {
         [Key]
         public int ID { get; set; }

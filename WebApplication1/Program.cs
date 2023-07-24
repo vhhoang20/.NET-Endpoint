@@ -1,9 +1,9 @@
 using WebApplication1.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
+using WebApplication1.IdentityServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,31 +14,29 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var ConnectionString = builder.Configuration.GetConnectionString("ConnStr");
+
 // EF
-builder.Services.AddDbContext<APIDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("ConnStr")));
+builder.Services.AddDbContext<APIDbContext>(options => options.UseSqlServer(ConnectionString));
 
 // Identity
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddEntityFrameworkStores<APIDbContext>()
-    .AddDefaultTokenProviders();
+builder.Services.AddIdentity<User, IdentityRole>() // để cho nó dùng được UserManger và roleManager
+                .AddEntityFrameworkStores<APIDbContext>()
+                .AddDefaultTokenProviders();
 
-// Authentication
-builder.Services.AddAuthentication(options =>
+// add IdentiyServer
+builder.Services.ConfigureApplicationCookie(config =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.SaveToken = true;
-    options.RequireHttpsMetadata = false;
-    options.TokenValidationParameters = new TokenValidationParameters()
-    {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Secret"]))
-    };
+    config.Cookie.Name = "IdentityServer.Cookie";
+    config.LoginPath = "/Authentication/Login";
+    config.LogoutPath = "/Authentication/Logout";
 });
+
+builder.Services.AddIdentityServer()
+        .AddDeveloperSigningCredential()
+        .AddInMemoryApiScopes(Config.GetApiScopes())
+        .AddInMemoryIdentityResources(Config.GetIdentityResources())
+        .AddInMemoryClients(Config.GetClients());
 
 var app = builder.Build();
 
@@ -50,7 +48,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseIdentityServer();
 app.UseAuthentication();
+
 app.UseAuthorization();
 
 app.MapControllers();

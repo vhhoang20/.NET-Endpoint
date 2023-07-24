@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace WebApplication1.Models
 {
-    public class APIDbContext : DbContext
+    public class APIDbContext : IdentityDbContext<User>
     {
         public APIDbContext(DbContextOptions<APIDbContext> options) : base(options)
         {}
