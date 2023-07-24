@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
 using WebApplication1.IdentityServer;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,13 @@ builder.Services.AddIdentity<User, IdentityRole>() // để cho nó dùng đư�
                 .AddEntityFrameworkStores<APIDbContext>()
                 .AddDefaultTokenProviders();
 
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequireNonAlphanumeric = false; // Set to 'true' if you want to enforce non-alphanumeric characters.
+    options.Password.RequireUppercase = false; // Set to 'true' if you want to enforce uppercase letters.
+    // Other password policy settings...
+});
+
 // add IdentiyServer
 builder.Services.ConfigureApplicationCookie(config =>
 {
@@ -32,11 +40,33 @@ builder.Services.ConfigureApplicationCookie(config =>
     config.LogoutPath = "/Authentication/Logout";
 });
 
-builder.Services.AddIdentityServer()
+var migrationsAssembly = typeof(Program).GetTypeInfo().Assembly.GetName().Name;
+
+builder.Services.AddIdentityServer(options =>
+{
+    options.Events.RaiseErrorEvents = true;
+    options.Events.RaiseInformationEvents = true;
+    options.Events.RaiseFailureEvents = true;
+    options.Events.RaiseSuccessEvents = true;
+})
+        .AddConfigurationStore(options =>
+        {
+            // CHANGE HERE: UseNpgsql instead of UseSqlServer 
+            options.ConfigureDbContext = b => b.UseSqlServer(ConnectionString,
+                sql => sql.MigrationsAssembly(migrationsAssembly));
+        })
+        .AddOperationalStore(options =>
+        {
+            // UseNpgsql instead of UseSqlServer
+            options.ConfigureDbContext = b => b.UseSqlServer(ConnectionString,
+                sql => sql.MigrationsAssembly(migrationsAssembly));
+        })
+        .AddAspNetIdentity<User>()
         .AddDeveloperSigningCredential()
-        .AddInMemoryApiScopes(Config.GetApiScopes())
+        .AddInMemoryApiScopes(Config.ApiScopes)
         .AddInMemoryIdentityResources(Config.GetIdentityResources())
-        .AddInMemoryClients(Config.GetClients());
+        .AddInMemoryApiResources(Config.ApiResources)
+        .AddInMemoryClients(Config.Clients);
 
 var app = builder.Build();
 
@@ -48,7 +78,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRouting(); 
 app.UseIdentityServer();
 app.UseAuthentication();
 

@@ -51,7 +51,7 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> PutProduct(Product product)
         {
             // Find the existing user by ID
-            var existingProduct = await _context.Products.FirstOrDefaultAsync(u => u.ID == product.ID);
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(u => u.productId == product.productId);
             if (existingProduct == null)
             {
                 return NotFound("Product not found.");
@@ -70,7 +70,7 @@ namespace WebApplication1.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ProductExists(product.ID))
+                if (!ProductExists(product.productId))
                 {
                     return NotFound("Product not found.");
                 }
@@ -100,7 +100,7 @@ namespace WebApplication1.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteProduct(int id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ID == id);
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.productId == id);
             if (product == null)
             {
                 return NotFound();
@@ -114,7 +114,7 @@ namespace WebApplication1.Controllers
 
         private bool ProductExists(int id)
         {
-            return (_context.Products?.Any(e => e.ID == id)).GetValueOrDefault();
+            return (_context.Products?.Any(e => e.productId == id)).GetValueOrDefault();
         }
     }
 }

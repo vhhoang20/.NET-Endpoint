@@ -51,7 +51,7 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> PutPayment(Payment payment)
         {
             // Find the existing by ID
-            var existingPayment = await _context.Payments.FirstOrDefaultAsync(u => u.Id == payment.Id);
+            var existingPayment = await _context.Payments.FirstOrDefaultAsync(u => u.paymentId == payment.paymentId);
             if (existingPayment == null)
             {
                 return NotFound("User not found.");
@@ -69,7 +69,7 @@ namespace WebApplication1.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!PaymentExists(payment.Id))
+                if (!PaymentExists(payment.paymentId))
                 {
                     return NotFound("Payment not found.");
                 }
@@ -88,7 +88,7 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<ActionResult<Payment>> PostPayment(Payment payment)
         {
-            var existingPayment = await _context.Payments.FirstOrDefaultAsync(u => u.Id == payment.Id);
+            var existingPayment = await _context.Payments.FirstOrDefaultAsync(u => u.paymentId == payment.paymentId);
             if (existingPayment != null)
             {
                 return Conflict("Payment is already exist.");
@@ -105,7 +105,7 @@ namespace WebApplication1.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeletePayment(int id)
         {
-            var payment = await _context.Payments.FirstOrDefaultAsync(u => u.Id == id);
+            var payment = await _context.Payments.FirstOrDefaultAsync(u => u.paymentId == id);
             if (payment == null)
             {
                 return NotFound();
@@ -119,7 +119,7 @@ namespace WebApplication1.Controllers
 
         private bool PaymentExists(int id)
         {
-            return (_context.Payments?.Any(e => e.Id == id)).GetValueOrDefault();
+            return (_context.Payments?.Any(e => e.paymentId == id)).GetValueOrDefault();
         }
     }
 }

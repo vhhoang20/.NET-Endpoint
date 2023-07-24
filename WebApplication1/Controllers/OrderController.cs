@@ -50,7 +50,7 @@ namespace WebApplication1.Controllers
         [HttpPut]
         public async Task<IActionResult> PutOrder(Order order)
         {
-            var existingOder = await _context.Orders.FirstOrDefaultAsync(u => u.ID == order.ID);
+            var existingOder = await _context.Orders.FirstOrDefaultAsync(u => u.orderId == order.orderId);
             if (existingOder == null)
             {
                 return NotFound("Order not found.");
@@ -69,7 +69,7 @@ namespace WebApplication1.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!OrderExists(existingOder.ID))
+                if (!OrderExists(existingOder.orderId))
                 {
                     return NotFound("Order not found.");
                 }
@@ -88,7 +88,7 @@ namespace WebApplication1.Controllers
         [HttpPost]
         public async Task<ActionResult<Order>> PostOrder(Order order)
         {
-            var existingOrder = await _context.Orders.FirstOrDefaultAsync(u => u.ID == order.ID);
+            var existingOrder = await _context.Orders.FirstOrDefaultAsync(u => u.orderId == order.orderId);
             if (existingOrder != null)
             {
                 return Conflict("Username or email is already exist.");
@@ -105,7 +105,7 @@ namespace WebApplication1.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteOrder(int id)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(u => u.ID == id);
+            var order = await _context.Orders.FirstOrDefaultAsync(u => u.orderId == id);
             if (order == null)
             {
                 return NotFound();
@@ -119,7 +119,7 @@ namespace WebApplication1.Controllers
 
         private bool OrderExists(int id)
         {
-            return (_context.Orders?.Any(e => e.ID == id)).GetValueOrDefault();
+            return (_context.Orders?.Any(e => e.orderId == id)).GetValueOrDefault();
         }
     }
 }

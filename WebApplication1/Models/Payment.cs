@@ -6,9 +6,10 @@ namespace WebApplication1.Models
     public class Payment
     {
         [Key]
-        public int Id { get; set; }
+        public int paymentId { get; set; }
         [ForeignKey("User")]
-        public int customerID { get; set; }
+        public string customerID { get; set; }
+        public User User { get; set; }
         public string CardType { get; set; }
         public string CardNumber { get; set; }
         public int balance { get; set; }

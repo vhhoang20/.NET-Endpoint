@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using IdentityServer4;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -28,7 +31,7 @@ namespace WebApplication1.Controllers
 
         // POST: /auth/login
         [HttpPost("Login")]
-        public async Task<IActionResult> Login(Login model)
+        public async Task<IActionResult> Login([FromBody] Login model)
         {
             if (ModelState.IsValid)
             {
@@ -36,7 +39,6 @@ namespace WebApplication1.Controllers
                 if (user != null)
                 {
                     var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, lockoutOnFailure: false);
-
                     if (result.Succeeded)
                     {
                         // Redirect to the home page or some other page after successful login
@@ -62,7 +64,7 @@ namespace WebApplication1.Controllers
 
         // POST: /auth/register
         [HttpPost("Register")]
-        public async Task<IActionResult> Register(Register model)
+        public async Task<IActionResult> Register([FromBody] Register model)
         {
             if (ModelState.IsValid)
             {

@@ -3,14 +3,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApplication1.Models
 {
-    public class OrderItem
+    public class ShoppingItem
     {
-        [ForeignKey("Order")]
-        public int orderID { get; set; }
+        [Key]
+        public int Id { get; set; }
         [ForeignKey("Cart")]
-        public int cartID { get; set; }
+        public int? cartId { get; set; }
+
+        [ForeignKey("Order")]
+        public int? orderId { get; set; }
+
         [ForeignKey("Product")]
-        public int productID { get; set; }
+        public int productId { get; set; }
+        public int product { get; set; }
         public int quantity { get; set; }
         public string status { get; set; }
     }
