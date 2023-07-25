@@ -6,9 +6,10 @@ namespace WebApplication1.IdentityServer
     public static class Config
     {
         public static IEnumerable<ApiScope> ApiScopes =>
-        new List<ApiScope>
+        new ApiScope[]
         {
-            new ApiScope("api1", "My API")
+            new ApiScope("myApi.read"),
+            new ApiScope("myApi.write"),
         };
 
         public static IEnumerable<IdentityResource> GetIdentityResources()
@@ -27,9 +28,15 @@ namespace WebApplication1.IdentityServer
                 new Client
                 {
                     ClientId = "client",
+                    AllowOfflineAccess = true,
+                    RefreshTokenUsage = TokenUsage.ReUse,
+                    UpdateAccessTokenClaimsOnRefresh = true,
+                    RefreshTokenExpiration = TokenExpiration.Sliding,
+                    AllowAccessTokensViaBrowser = true,
+                    RequireClientSecret = false,
 
                     // no interactive user, use the clientid/secret for authentication
-                    AllowedGrantTypes = GrantTypes.ClientCredentials,
+                    AllowedGrantTypes =  GrantTypes.ResourceOwnerPasswordAndClientCredentials,
 
                     // secret for authentication
                     ClientSecrets =
@@ -38,19 +45,19 @@ namespace WebApplication1.IdentityServer
                     },
 
                     // scopes that client has access to
-                    AllowedScopes = { "api1" }
-                }
+                    AllowedScopes = {IdentityServerConstants.StandardScopes.OfflineAccess,
+                                    IdentityServerConstants.StandardScopes.OpenId, "myApi.read"}}
             };
 
         public static IEnumerable<ApiResource> ApiResources =>
-         new ApiResource[]
-         {
+        new ApiResource[]
+        {
             new ApiResource("myApi")
             {
                 Scopes = new List<string>{ "myApi.read","myApi.write" },
                 ApiSecrets = new List<Secret>{ new Secret("supersecret".Sha256()) }
             }
-         };
+        };
     }
 
 }
