@@ -7,11 +7,11 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class AuthoController : ControllerBase
     {
-        [HttpGet("secured")]
-        [Authorize(Policy = "CustomPolicy")]
-        public IActionResult GetUserData()
+        [HttpGet]
+        [Authorize]
+        public IActionResult TestAutho()
         {
-            return Ok("This is secured data.");
+            return Ok("Authoried");
         }
     }
 }

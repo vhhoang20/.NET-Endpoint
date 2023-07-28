@@ -7,6 +7,7 @@ using WebApplication1.IdentityServer;
 using System.Reflection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,7 @@ builder.Services.AddAuthentication("Bearer")
     {
         options.Authority = "http://localhost:5157";
         options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
         options.Audience = "myApi";
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -45,11 +47,7 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("CustomPolicy", policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.RequireClaim("scope", "myApi.read");
-    });
+    options.AddPolicy("CustomPolicy", policy => policy.RequireAuthenticatedUser());
 });
 
 builder.Services.Configure<IdentityOptions>(options =>
@@ -71,8 +69,6 @@ builder.Services.AddIdentityServer(options =>
         .AddInMemoryIdentityResources(Config.GetIdentityResources())
         .AddInMemoryApiResources(Config.ApiResources)
         .AddInMemoryClients(Config.Clients);
-
-
 
 var app = builder.Build();
 
