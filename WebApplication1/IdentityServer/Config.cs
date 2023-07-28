@@ -1,4 +1,5 @@
-﻿using IdentityServer4;
+﻿using IdentityModel;
+using IdentityServer4;
 using IdentityServer4.Models;
 
 namespace WebApplication1.IdentityServer
@@ -18,7 +19,7 @@ namespace WebApplication1.IdentityServer
         {
             new IdentityResources.OpenId(),
             new IdentityResources.Profile(),
-            new IdentityResource("sub", new List<string> { "sub" }) // Add the 'sub' claim to the authentication token
+            //new IdentityResource("sub", new List<string> { "sub" }) // Add the 'sub' claim to the authentication token
         };
         }
 
@@ -41,12 +42,14 @@ namespace WebApplication1.IdentityServer
                     // secret for authentication
                     ClientSecrets =
                     {
-                        new Secret("secret".Sha256())
+                        new Secret("supersecret".Sha256())
                     },
 
                     // scopes that client has access to
                     AllowedScopes = {IdentityServerConstants.StandardScopes.OfflineAccess,
-                                    IdentityServerConstants.StandardScopes.OpenId, "myApi.read"}}
+                                    IdentityServerConstants.StandardScopes.OpenId, 
+                                    "myApi.read",
+                                    "myApi.write"}}
             };
 
         public static IEnumerable<ApiResource> ApiResources =>

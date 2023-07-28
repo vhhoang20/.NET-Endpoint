@@ -5,6 +5,8 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 using WebApplication1.IdentityServer;
 using System.Reflection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,24 +27,36 @@ builder.Services.AddIdentity<User, IdentityRole>() // để cho nó dùng đư�
                 .AddEntityFrameworkStores<APIDbContext>()
                 .AddDefaultTokenProviders();
 
+var jwtSecret = builder.Configuration["JwtSecret"];
+builder.Services.AddSingleton(jwtSecret);
+
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
-        options.Authority = "https://localhost:5157";
-
+        options.Authority = "http://localhost:5157";
+        options.SaveToken = true;
+        options.Audience = "myApi";
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = false
         };
+
     });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CustomPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("scope", "myApi.read");
+    });
+});
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
 });
-
-var migrationsAssembly = typeof(Program).GetTypeInfo().Assembly.GetName().Name;
 
 builder.Services.AddIdentityServer(options =>
 {
@@ -58,6 +72,8 @@ builder.Services.AddIdentityServer(options =>
         .AddInMemoryApiResources(Config.ApiResources)
         .AddInMemoryClients(Config.Clients);
 
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -68,11 +84,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseRouting(); 
+app.UseStaticFiles();
+app.UseRouting();
 app.UseIdentityServer();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers().RequireAuthorization("CustomPolicy");
+});
 
 app.Run();
