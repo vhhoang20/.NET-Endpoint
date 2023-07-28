@@ -8,10 +8,16 @@ namespace WebApplication1.Controllers
     public class AuthoController : ControllerBase
     {
         [HttpGet]
-        [Authorize]
+        [Authorize (Policy = "CustomPolicy")]
         public IActionResult TestAutho()
         {
             return Ok("Authoried");
+        }
+
+        [HttpGet("temp")]
+        public IActionResult temp()
+        {
+            return Ok("UnAuthoried");
         }
     }
 }

@@ -8,16 +8,17 @@ using System.Reflection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Connection String
 var ConnectionString = builder.Configuration.GetConnectionString("ConnStr");
 
 // EF
@@ -31,31 +32,13 @@ builder.Services.AddIdentity<User, IdentityRole>() // để cho nó dùng đư�
 var jwtSecret = builder.Configuration["JwtSecret"];
 builder.Services.AddSingleton(jwtSecret);
 
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.Authority = "http://localhost:5157";
-        options.SaveToken = true;
-        options.RequireHttpsMetadata = false;
-        options.Audience = "myApi";
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateAudience = false
-        };
-
-    });
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("CustomPolicy", policy => policy.RequireAuthenticatedUser());
-});
-
 builder.Services.Configure<IdentityOptions>(options =>
 {
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
 });
 
+// Identity Server
 builder.Services.AddIdentityServer(options =>
 {
     options.Events.RaiseErrorEvents = true;
@@ -69,6 +52,28 @@ builder.Services.AddIdentityServer(options =>
         .AddInMemoryIdentityResources(Config.GetIdentityResources())
         .AddInMemoryApiResources(Config.ApiResources)
         .AddInMemoryClients(Config.Clients);
+
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = "http://localhost:5157";
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        options.Audience = "myApi";
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("CustomPolicy", policy =>
+    {
+        policy.RequireAuthenticatedUser();
+        policy.RequireClaim("myApi");
+    });
+});
 
 var app = builder.Build();
 

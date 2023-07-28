@@ -45,6 +45,13 @@ namespace WebApplication1.Controllers
                 var user = await _userManager.FindByNameAsync(model.UserName);
                 if (user != null)
                 {
+                    var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+                    if (!result.Succeeded)
+                    {
+                        // Password is incorrect, return Unauthorized
+                        return Unauthorized();
+                    }
+
                     await _signInManager.PasswordSignInAsync(user, model.Password, false, true);
                     var claims = new[]
                     {
