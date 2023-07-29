@@ -45,14 +45,13 @@ namespace WebApplication1.Controllers
                 var user = await _userManager.FindByNameAsync(model.UserName);
                 if (user != null)
                 {
-                    var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
+                    var result = await _signInManager.PasswordSignInAsync(user, model.Password, false, lockoutOnFailure: false);
                     if (!result.Succeeded)
                     {
                         // Password is incorrect, return Unauthorized
                         return Unauthorized();
                     }
 
-                    await _signInManager.PasswordSignInAsync(user, model.Password, false, true);
                     var claims = new[]
                     {
                         new Claim(ClaimTypes.NameIdentifier, user.Id),
@@ -67,8 +66,7 @@ namespace WebApplication1.Controllers
                         audience: "myApi",
                         claims: claims,
                         expires: DateTime.UtcNow.AddHours(1),
-                        signingCredentials: creds
-                    );
+                        signingCredentials: creds);
 
                     return Ok(new { token = new JwtSecurityTokenHandler().WriteToken(token) });
                 }
@@ -106,7 +104,7 @@ namespace WebApplication1.Controllers
 
                 }
 
-                var result = await _userManager.CreateAsync(user);
+                var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
                     await _signInManager.SignInAsync(user, isPersistent: false);

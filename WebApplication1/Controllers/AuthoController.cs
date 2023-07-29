@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
@@ -7,17 +9,33 @@ namespace WebApplication1.Controllers
     [ApiController]
     public class AuthoController : ControllerBase
     {
-        [HttpGet]
-        [Authorize (Policy = "CustomPolicy")]
-        public IActionResult TestAutho()
+        private readonly ILogger<AuthoController> _logger;
+
+        public AuthoController(ILogger<AuthoController> logger)
         {
-            return Ok("Authoried");
+            _logger = logger;
+        }
+
+        [HttpGet]
+        public IActionResult Get()
+        {
+            if (User.Identity.IsAuthenticated)
+            {
+                _logger.LogInformation("User is authenticated.");
+                return new JsonResult(from c in User.Claims select new { c.Type, c.Value });
+            }
+            else
+            {
+                _logger.LogInformation("User is not authenticated.");
+                return new JsonResult("User is not authenticated.");
+            }
         }
 
         [HttpGet("temp")]
-        public IActionResult temp()
+        [Authorize]
+        public IActionResult Got()
         {
-            return Ok("UnAuthoried");
+            return Ok("temp");
         }
     }
 }

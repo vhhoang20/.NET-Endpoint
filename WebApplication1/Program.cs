@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using IdentityServer4.AspNetIdentity;
+using Microsoft.AspNetCore.Diagnostics;
+using IdentityModel;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,55 +28,40 @@ var ConnectionString = builder.Configuration.GetConnectionString("ConnStr");
 builder.Services.AddDbContext<APIDbContext>(options => options.UseSqlServer(ConnectionString));
 
 // Identity
-builder.Services.AddIdentity<User, IdentityRole>() // để cho nó dùng được UserManger và roleManager
+builder.Services.AddIdentity<User, IdentityRole>(option =>
+{
+    option.Password.RequireDigit = false;
+    option.Password.RequiredLength = 3;
+    option.Password.RequiredUniqueChars = 0;
+    option.Password.RequireLowercase = false;
+    option.Password.RequireNonAlphanumeric = false;
+    option.Password.RequireUppercase = false;
+})
                 .AddEntityFrameworkStores<APIDbContext>()
                 .AddDefaultTokenProviders();
+
 
 var jwtSecret = builder.Configuration["JwtSecret"];
 builder.Services.AddSingleton(jwtSecret);
 
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    options.Password.RequireNonAlphanumeric = false;
-    options.Password.RequireUppercase = false;
-});
-
 // Identity Server
-builder.Services.AddIdentityServer(options =>
-{
-    options.Events.RaiseErrorEvents = true;
-    options.Events.RaiseInformationEvents = true;
-    options.Events.RaiseFailureEvents = true;
-    options.Events.RaiseSuccessEvents = true;
-})
+builder.Services.AddIdentityServer()
         .AddAspNetIdentity<User>()
         .AddDeveloperSigningCredential()
+        .AddInMemoryPersistedGrants()
         .AddInMemoryApiScopes(Config.ApiScopes)
         .AddInMemoryIdentityResources(Config.GetIdentityResources())
         .AddInMemoryApiResources(Config.ApiResources)
         .AddInMemoryClients(Config.Clients);
 
+// Authentication
 builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.Authority = "http://localhost:5157";
-        options.SaveToken = true;
-        options.RequireHttpsMetadata = false;
-        options.Audience = "myApi";
-        options.TokenValidationParameters = new TokenValidationParameters
+        .AddIdentityServerAuthentication(options =>
         {
-            ValidateAudience = false
-        };
-    });
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("CustomPolicy", policy =>
-    {
-        policy.RequireAuthenticatedUser();
-        policy.RequireClaim("myApi");
-    });
-});
+            options.Authority = "http://localhost:5157";
+            options.RequireHttpsMetadata = false;
+            options.ApiName = "myApi";
+        });
 
 var app = builder.Build();
 
@@ -88,12 +76,11 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseIdentityServer();
-app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseEndpoints(endpoints =>
 {
-    endpoints.MapControllers().RequireAuthorization("CustomPolicy");
+    endpoints.MapControllers();
 });
 
 app.Run();

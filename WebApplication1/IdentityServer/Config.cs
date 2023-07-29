@@ -1,6 +1,7 @@
 ﻿using IdentityModel;
 using IdentityServer4;
 using IdentityServer4.Models;
+using System.Security.Claims;
 
 namespace WebApplication1.IdentityServer
 {
@@ -19,7 +20,7 @@ namespace WebApplication1.IdentityServer
         {
             new IdentityResources.OpenId(),
             new IdentityResources.Profile(),
-            //new IdentityResource("sub", new List<string> { "sub" }) // Add the 'sub' claim to the authentication token
+            new IdentityResource("sub", new List<string> { JwtClaimTypes.Subject })
         };
         }
 
@@ -47,9 +48,9 @@ namespace WebApplication1.IdentityServer
 
                     // scopes that client has access to
                     AllowedScopes = {IdentityServerConstants.StandardScopes.OfflineAccess,
-                                    IdentityServerConstants.StandardScopes.OpenId, 
-                                    "myApi.read",
-                                    "myApi.write"}}
+                                    IdentityServerConstants.StandardScopes.OpenId,
+                                    "myApi.read","myApi.write"}
+                }
             };
 
         public static IEnumerable<ApiResource> ApiResources =>
