@@ -25,15 +25,19 @@ namespace WebApplication1.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly UserManager<User> _userManager;
         private readonly string _jwtSecret;
+        private readonly ILogger<AuthenticationController> _logger;
 
         public AuthenticationController(
             SignInManager<User> signInManager,
             UserManager<User> userManager,
-            string jwtSecret)
+            string jwtSecret,
+            ILogger<AuthenticationController> logger)
+
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _jwtSecret = jwtSecret;
+            _logger = logger;
         }
 
         // POST: /auth/login
@@ -74,6 +78,32 @@ namespace WebApplication1.Controllers
 
             return Unauthorized();
 
+        }
+
+        // POST: /auth/logout
+        [HttpPost("Logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user != null)
+                {
+                    await _signInManager.SignOutAsync(); // Sign out the user
+                    _logger.LogInformation($"User {user.UserName} logged out.");
+                    return Ok(new { message = "Logged out successfully." });
+                }
+                else
+                {
+                    return BadRequest("User not found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during logout.");
+                return StatusCode(500, new { message = "An error occurred during logout." });
+            }
         }
 
         // POST: /auth/register
