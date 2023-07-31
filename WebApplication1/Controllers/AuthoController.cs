@@ -31,11 +31,18 @@ namespace WebApplication1.Controllers
             }
         }
 
-        [HttpGet("temp")]
-        [Authorize]
+        [HttpGet("custom")]
+        [Authorize("Customer")]
         public IActionResult Got()
         {
-            return Ok("temp");
+            return Ok("customer");
+        }
+
+        [HttpGet("admin")]
+        [Authorize("Admin")]
+        public IActionResult gut()
+        {
+            return Ok("admin");
         }
     }
 }

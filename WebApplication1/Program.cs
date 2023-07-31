@@ -54,6 +54,13 @@ builder.Services.AddIdentityServer()
         .AddInMemoryApiResources(Config.ApiResources)
         .AddInMemoryClients(Config.Clients);
 
+// Authorization
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireClaim("Role", "admin"));
+    options.AddPolicy("Customer", policy => policy.RequireClaim("Role", "customer"));
+});
+
 // Authentication
 builder.Services.AddAuthentication("Bearer")
         .AddIdentityServerAuthentication(options =>

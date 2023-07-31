@@ -135,6 +135,8 @@ namespace WebApplication1.Controllers
                 }
 
                 var result = await _userManager.CreateAsync(user, model.Password);
+                await _userManager.AddClaimAsync(user, new Claim("Role", "customer"));
+
                 if (result.Succeeded)
                 {
                     await _signInManager.SignInAsync(user, isPersistent: false);
