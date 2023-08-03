@@ -10,5 +10,6 @@ namespace WebApplication1.Models
         [ForeignKey("User")]
         public string customerID { get; set; }
         public User User { get; set; }
+        public ICollection<ShoppingItem> ShoppingItems { get; set; }
     }
 }

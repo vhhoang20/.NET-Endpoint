@@ -12,6 +12,8 @@ using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using IdentityServer4.AspNetIdentity;
 using Microsoft.AspNetCore.Diagnostics;
 using IdentityModel;
+using IdentityServer;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +45,7 @@ builder.Services.AddIdentity<User, IdentityRole>(option =>
 
 var jwtSecret = builder.Configuration["JwtSecret"];
 builder.Services.AddSingleton(jwtSecret);
+var migrationAssembly = typeof(Program).GetTypeInfo().Assembly.GetName().Name;
 
 // Identity Server
 builder.Services.AddIdentityServer()
@@ -52,7 +55,8 @@ builder.Services.AddIdentityServer()
         .AddInMemoryApiScopes(Config.ApiScopes)
         .AddInMemoryIdentityResources(Config.GetIdentityResources())
         .AddInMemoryApiResources(Config.ApiResources)
-        .AddInMemoryClients(Config.Clients);
+        .AddInMemoryClients(Config.Clients)
+        .AddProfileService<ProfileService>();
 
 // Authorization
 builder.Services.AddAuthorization(options =>
@@ -63,11 +67,11 @@ builder.Services.AddAuthorization(options =>
 
 // Authentication
 builder.Services.AddAuthentication("Bearer")
-        .AddIdentityServerAuthentication(options =>
+        .AddJwtBearer("Bearer" ,options =>
         {
             options.Authority = "http://localhost:5157";
             options.RequireHttpsMetadata = false;
-            options.ApiName = "myApi";
+            options.Audience = "myApi";
         });
 
 var app = builder.Build();

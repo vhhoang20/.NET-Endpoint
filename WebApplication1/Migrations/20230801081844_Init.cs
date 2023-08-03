@@ -54,40 +54,6 @@ namespace WebApplication1.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Products",
-                columns: table => new
-                {
-                    productId = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    price = table.Column<int>(type: "int", nullable: false),
-                    rate = table.Column<float>(type: "real", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Products", x => x.productId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ShoppingItems",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    cartId = table.Column<int>(type: "int", nullable: true),
-                    orderId = table.Column<int>(type: "int", nullable: true),
-                    productId = table.Column<int>(type: "int", nullable: false),
-                    product = table.Column<int>(type: "int", nullable: false),
-                    quantity = table.Column<int>(type: "int", nullable: false),
-                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ShoppingItems", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -257,6 +223,55 @@ namespace WebApplication1.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ShoppingItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    CartId = table.Column<int>(type: "int", nullable: true),
+                    OrderId = table.Column<int>(type: "int", nullable: true),
+                    quantity = table.Column<int>(type: "int", nullable: false),
+                    status = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShoppingItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShoppingItems_Carts_CartId",
+                        column: x => x.CartId,
+                        principalTable: "Carts",
+                        principalColumn: "ID");
+                    table.ForeignKey(
+                        name: "FK_ShoppingItems_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "orderId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                columns: table => new
+                {
+                    productId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    price = table.Column<int>(type: "int", nullable: false),
+                    rate = table.Column<float>(type: "real", nullable: false),
+                    ShoppingItemId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.productId);
+                    table.ForeignKey(
+                        name: "FK_Products_ShoppingItems_ShoppingItemId",
+                        column: x => x.ShoppingItemId,
+                        principalTable: "ShoppingItems",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -310,6 +325,21 @@ namespace WebApplication1.Migrations
                 name: "IX_Payments_customerID",
                 table: "Payments",
                 column: "customerID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_ShoppingItemId",
+                table: "Products",
+                column: "ShoppingItemId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShoppingItems_CartId",
+                table: "ShoppingItems",
+                column: "CartId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShoppingItems_OrderId",
+                table: "ShoppingItems",
+                column: "OrderId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -330,22 +360,22 @@ namespace WebApplication1.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Carts");
-
-            migrationBuilder.DropTable(
-                name: "Orders");
-
-            migrationBuilder.DropTable(
                 name: "Payments");
 
             migrationBuilder.DropTable(
                 name: "Products");
 
             migrationBuilder.DropTable(
+                name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
                 name: "ShoppingItems");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "Carts");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

@@ -12,7 +12,7 @@ using WebApplication1.Models;
 namespace WebApplication1.Migrations
 {
     [DbContext(typeof(APIDbContext))]
-    [Migration("20230727085249_Init")]
+    [Migration("20230801081844_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -247,12 +247,13 @@ namespace WebApplication1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("productId"), 1L, 1);
 
+                    b.Property<int?>("ShoppingItemId")
+                        .HasColumnType("int");
+
                     b.Property<string>("description")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("name")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("price")
@@ -262,6 +263,8 @@ namespace WebApplication1.Migrations
                         .HasColumnType("real");
 
                     b.HasKey("productId");
+
+                    b.HasIndex("ShoppingItemId");
 
                     b.ToTable("Products");
                 });
@@ -274,16 +277,13 @@ namespace WebApplication1.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int?>("cartId")
+                    b.Property<int?>("CartId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("orderId")
+                    b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int>("product")
-                        .HasColumnType("int");
-
-                    b.Property<int>("productId")
+                    b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.Property<int>("quantity")
@@ -294,6 +294,10 @@ namespace WebApplication1.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CartId");
+
+                    b.HasIndex("OrderId");
 
                     b.ToTable("ShoppingItems");
                 });
@@ -461,6 +465,39 @@ namespace WebApplication1.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("WebApplication1.Models.Product", b =>
+                {
+                    b.HasOne("WebApplication1.Models.ShoppingItem", null)
+                        .WithMany("Products")
+                        .HasForeignKey("ShoppingItemId");
+                });
+
+            modelBuilder.Entity("WebApplication1.Models.ShoppingItem", b =>
+                {
+                    b.HasOne("WebApplication1.Models.Cart", null)
+                        .WithMany("ShoppingItems")
+                        .HasForeignKey("CartId");
+
+                    b.HasOne("WebApplication1.Models.Order", null)
+                        .WithMany("ShoppingItems")
+                        .HasForeignKey("OrderId");
+                });
+
+            modelBuilder.Entity("WebApplication1.Models.Cart", b =>
+                {
+                    b.Navigation("ShoppingItems");
+                });
+
+            modelBuilder.Entity("WebApplication1.Models.Order", b =>
+                {
+                    b.Navigation("ShoppingItems");
+                });
+
+            modelBuilder.Entity("WebApplication1.Models.ShoppingItem", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

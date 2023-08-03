@@ -26,14 +26,16 @@ namespace WebApplication1.Controllers
         private readonly UserManager<User> _userManager;
         private readonly string _jwtSecret;
         private readonly ILogger<AuthenticationController> _logger;
+        private readonly APIDbContext _context;
 
-        public AuthenticationController(
+        public AuthenticationController(APIDbContext context,
             SignInManager<User> signInManager,
             UserManager<User> userManager,
             string jwtSecret,
             ILogger<AuthenticationController> logger)
 
         {
+            _context = context;
             _signInManager = signInManager;
             _userManager = userManager;
             _jwtSecret = jwtSecret;
@@ -139,6 +141,16 @@ namespace WebApplication1.Controllers
 
                 if (result.Succeeded)
                 {
+                    var cart = new Cart
+                    {
+                        customerID = user.Id
+                        // Add other cart properties as needed
+                    };
+
+                    // Save the cart to the database
+                    _context.Carts.Add(cart);
+                    _context.SaveChanges();
+
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     var claims = new[]
                     {

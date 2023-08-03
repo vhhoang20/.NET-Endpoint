@@ -11,57 +11,57 @@ namespace WebApplication1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ShoppingItemController : ControllerBase
+    public class ProductController : ControllerBase
     {
         private readonly APIDbContext _context;
 
-        public ShoppingItemController(APIDbContext context)
+        public ProductController(APIDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/OrderItem
+        // GET: api/Product
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ShoppingItem>>> GetOrderItems()
+        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-          if (_context.ShoppingItems == null)
-          {
-              return NotFound();
-          }
-            return await _context.ShoppingItems.ToListAsync();
+            if (_context.Products == null)
+            {
+                return NotFound();
+            }
+            return await _context.Products.ToListAsync();
         }
 
-        // GET: api/OrderItem/5
+        // GET: api/Product/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ShoppingItem>> GetOrderItem(int id)
+        public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            var orderItem = await _context.ShoppingItems.FirstOrDefaultAsync(u => u.Id == id);
+            var product = await _context.Products.FindAsync(id);
 
-            if (orderItem == null)
+            if (product == null)
             {
                 return NotFound();
             }
 
-            return Ok(orderItem);
+            return Ok(product);
         }
 
-        // PUT: api/OrderItem/5
+        // PUT: api/Product/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut]
-        public async Task<IActionResult> PutOrderItem(ShoppingItem orderItem)
+        public async Task<IActionResult> PutProduct(Product product)
         {
-            var existingOrderItem = await _context.ShoppingItems.FirstOrDefaultAsync(u => u.Id == orderItem.Id);
-            if (existingOrderItem == null)
+            // Find the existing user by ID
+            var existingProduct = await _context.Products.FirstOrDefaultAsync(u => u.productId == product.productId);
+            if (existingProduct == null)
             {
-                return NotFound("Order item not found.");
+                return NotFound("Product not found.");
             }
 
-            // Update the properties of the existing
-            existingOrderItem.product = orderItem.product;
-            existingOrderItem.quantity = orderItem.quantity;
-            existingOrderItem.status = orderItem.status;
-            existingOrderItem.cartId = orderItem.cartId;
-            existingOrderItem.orderId = orderItem.orderId;
+            // Update the properties of the existing user
+            existingProduct.name = product.name;
+            existingProduct.description = product.description;
+            existingProduct.price = product.price;
+            existingProduct.rate = product.rate;
 
             try
             {
@@ -70,9 +70,9 @@ namespace WebApplication1.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!OrderItemExists(orderItem.Id))
+                if (!ProductExists(product.productId))
                 {
-                    return NotFound("Order item not found.");
+                    return NotFound("Product not found.");
                 }
                 else
                 {
@@ -84,43 +84,37 @@ namespace WebApplication1.Controllers
             return Ok("Modified success");
         }
 
-        // POST: api/OrderItem
+        // POST: api/Product
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<ShoppingItem>> PostOrderItem(ShoppingItem orderItem)
+        public async Task<ActionResult<Product>> PostProduct(Product product)
         {
-            var existingOrderItem = await _context.ShoppingItems.FirstOrDefaultAsync(u => u.cartId == orderItem.cartId);
-            if (existingOrderItem != null)
-            {
-                return Conflict("Order item is already exist.");
-            }
-
-            _context.ShoppingItems.Add(orderItem);
+            _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
             // Registration successful
-            return Ok(orderItem);
+            return Ok(product);
         }
 
-        // DELETE: api/OrderItem
+        // DELETE: api/Product/5
         [HttpDelete]
-        public async Task<IActionResult> DeleteOrderItem(int? cartId)
+        public async Task<IActionResult> DeleteProduct(int id)
         {
-            var orderItem = await _context.ShoppingItems.FirstOrDefaultAsync(u => u.cartId == cartId);
-            if (orderItem == null)
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.productId == id);
+            if (product == null)
             {
                 return NotFound();
             }
 
-            _context.ShoppingItems.Remove(orderItem);
+            _context.Products.Remove(product);
             await _context.SaveChangesAsync();
 
-            return Ok("Deleted successfully.");
+            return Ok("Product deleted successfully.");
         }
 
-        private bool OrderItemExists(int shoppingItemID)
+        private bool ProductExists(int id)
         {
-            return (_context.ShoppingItems?.Any(e => e.Id == shoppingItemID)).GetValueOrDefault();
+            return (_context.Products?.Any(e => e.productId == id)).GetValueOrDefault();
         }
     }
 }

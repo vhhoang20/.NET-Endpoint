@@ -14,5 +14,7 @@ namespace WebApplication1.Models
         public string address { get; set; }
         public int price { get; set; }
         public string status { get; set; }
+        public ICollection<ShoppingItem> ShoppingItems { get; set; }
+
     }
 }

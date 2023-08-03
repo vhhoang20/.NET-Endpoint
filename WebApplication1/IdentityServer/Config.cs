@@ -20,7 +20,7 @@ namespace WebApplication1.IdentityServer
         {
             new IdentityResources.OpenId(),
             new IdentityResources.Profile(),
-            new IdentityResource("sub", new List<string> { JwtClaimTypes.Subject })
+            //new IdentityResource("sub", new List<string> { JwtClaimTypes.Subject })
         };
         }
 
