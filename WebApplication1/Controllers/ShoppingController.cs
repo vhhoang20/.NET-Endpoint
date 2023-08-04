@@ -70,11 +70,20 @@ namespace WebApplication1.Controllers
             }
             else
             {
+                var totalPrice = 0;
+
+                foreach (var item in existingCartItem)
+                {
+                    var product = _context.Products.FirstOrDefault(p => p.productId == item.ProductId);
+                    totalPrice += product.price * item.quantity;
+                }
+
                 var newOrder = new Order
                 {
                     customerID = userId,
                     date = DateTime.Now,
                     address = userInfo.home,
+                    price = totalPrice,
                     status = "Sellers are preparing your order"
                 };
 
@@ -84,6 +93,7 @@ namespace WebApplication1.Controllers
 
                 foreach (var item in existingCartItem)
                 {
+
                     item.OrderId = newOrder.orderId;
                     item.CartId = null;
                     item.status = "Order";
@@ -93,7 +103,9 @@ namespace WebApplication1.Controllers
             }
 
 
-            return Ok("Add successful");
+            return Ok("Order placed successfully.");
         }
+
+
     }
 }
