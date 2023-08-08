@@ -7,6 +7,7 @@ namespace WebApplication1.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class AuthoController : ControllerBase
     {
         private readonly ILogger<AuthoController> _logger;
